@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microsoft Fabric Cost Savings Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0d2436; --teal:#0e7a6d; --teal-deep:#0a5a51; --mint:#e6f4f1;
+    --paper:#f7faf9; --amber:#c47b1e; --line:#d7e5e1; --card:#fff; --red:#b8442c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);line-height:1.55}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  header{padding:52px 0 32px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:12px}
+  h1{font-family:'Sora',sans-serif;font-size:clamp(28px,4.5vw,42px);font-weight:700;line-height:1.15;max-width:760px}
+  h1 span{color:var(--teal)}
+  .sub{margin-top:12px;max-width:680px;color:#3d5566;font-size:15.5px}
+
+  .grid{display:grid;grid-template-columns:1fr 400px;gap:26px;align-items:start;padding-bottom:64px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px;margin-bottom:20px}
+  .card h2{font-family:'Sora',sans-serif;font-size:17px;margin-bottom:4px}
+  .card .hint{font-size:13px;color:#6b8291;margin-bottom:20px}
+
+  .field{margin-bottom:20px}
+  .field label{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:500;margin-bottom:8px}
+  .field label .val{font-weight:600;color:var(--teal-deep);white-space:nowrap}
+  .num-wrap{font-weight:600;color:var(--teal-deep);white-space:nowrap;display:inline-flex;align-items:center;gap:2px}
+  .num-in{width:96px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;font-weight:600;color:var(--teal-deep);text-align:right}
+  .num-in:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .num-in::-webkit-outer-spin-button,.num-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .num-in[type=number]{-moz-appearance:textfield}
+  input[type=range]{width:100%;accent-color:var(--teal);height:6px;cursor:pointer}
+  .range-ends{display:flex;justify-content:space-between;font-size:11px;color:#8aa0ad;margin-top:4px}
+  select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:14px;color:var(--ink);background:#fff;cursor:pointer}
+  .toggle{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .toggle button{flex:1;padding:10px;border:none;background:#fff;font:inherit;font-size:13px;font-weight:500;cursor:pointer;color:#6b8291}
+  .toggle button.on{background:var(--teal);color:#fff;font-weight:600}
+  .note{font-size:12px;color:#6b8291;margin-top:6px;line-height:1.5}
+  .callout{background:var(--mint);border-radius:9px;padding:12px 14px;font-size:12.5px;color:var(--teal-deep);margin-top:4px;line-height:1.5;display:none}
+  .callout.show{display:block}
+  .section-title{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#6b8291;font-weight:600;margin:24px 0 16px;border-top:1px dashed var(--line);padding-top:16px}
+
+  .results{position:sticky;top:20px}
+  .results .big{background:linear-gradient(160deg,var(--teal) 0%,var(--teal-deep) 100%);color:#fff;border-radius:14px;padding:26px;margin-bottom:16px}
+  .big .lbl{font-size:13px;opacity:.85}
+  .big .num{font-family:'Sora',sans-serif;font-size:clamp(32px,5vw,44px);font-weight:700;margin:4px 0 2px}
+  .big .num.neg{color:#ffd9cf}
+  .big .per{font-size:13px;opacity:.85}
+  .stat-row{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  .stat-row:last-child{border-bottom:none}
+  .stat-row b{font-family:'Sora',sans-serif;white-space:nowrap}
+  .stat-row.sub-row{font-size:12.5px;color:#6b8291;padding:6px 0 6px 14px;border-bottom:none}
+  .pos{color:var(--teal-deep)} .neg{color:var(--red)}
+  .bar-wrap{margin-top:16px}
+  .bar-lbl{display:flex;justify-content:space-between;font-size:12px;color:#6b8291;margin-bottom:5px}
+  .bar{height:14px;border-radius:7px;background:var(--mint);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--teal);border-radius:7px;transition:width .3s ease}
+  .bar.before i{background:var(--red)}
+  .cta{display:block;text-align:center;background:var(--amber);color:#fff;font-weight:600;font-size:15px;border:none;border-radius:10px;padding:15px;margin-top:16px;cursor:pointer;text-decoration:none}
+  .cta:hover{filter:brightness(1.05)}
+  .disclaimer{font-size:11px;color:#8aa0ad;margin-top:12px;line-height:1.5}
+  footer{padding:20px 0 40px;font-size:12px;color:#8aa0ad;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Microsoft Fabric · Savings Estimator</div>
+    <h1>Estimate your real savings with <span>Microsoft Fabric</span></h1>
+    <p class="sub">This calculator prices Fabric bottom-up using published Azure list rates — capacity SKU (pay-as-you-go or reserved), OneLake storage, and Power BI licensing — and compares it against your current data & analytics stack.</p>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2>1 · Your current annual stack cost</h2>
+        <p class="hint">What you spend today, per year (USD).</p>
+        <div class="field">
+          <label>Data warehouse / lakehouse (Snowflake, Synapse, Redshift, Databricks SQL…) <span class="num-wrap">$<input type="text" inputmode="numeric" class="num-in" id="n-dw" data-max="1500000"></span></label>
+          <input type="range" id="dw" min="0" max="1500000" step="250" value="240000">
+          <div class="range-ends"><span>$0</span><span>$1.5M</span></div>
+        </div>
+        <div class="field">
+          <label>Data integration / ETL (ADF standalone, Informatica, Fivetran, Talend…) <span class="num-wrap">$<input type="text" inputmode="numeric" class="num-in" id="n-etl" data-max="600000"></span></label>
+          <input type="range" id="etl" min="0" max="600000" step="250" value="90000">
+          <div class="range-ends"><span>$0</span><span>$600K</span></div>
+        </div>
+        <div class="field">
+          <label>BI licensing (Power BI Premium P-SKU, Tableau, Qlik, Looker…) <span class="num-wrap">$<input type="text" inputmode="numeric" class="num-in" id="n-bi" data-max="600000"></span></label>
+          <input type="range" id="bi" min="0" max="600000" step="100" value="75000">
+          <div class="range-ends"><span>$0</span><span>$600K</span></div>
+        </div>
+        <div class="field">
+          <label>Storage (data lake / warehouse storage bill) <span class="num-wrap">$<input type="text" inputmode="numeric" class="num-in" id="n-stor" data-max="200000"></span></label>
+          <input type="range" id="stor" min="0" max="200000" step="250" value="20000">
+          <div class="range-ends"><span>$0</span><span>$200K</span></div>
+        </div>
+        <div class="field">
+          <label>Platform ops & maintenance (DevOps effort, monitoring, integration glue) <span class="num-wrap">$<input type="text" inputmode="numeric" class="num-in" id="n-ops" data-max="500000"></span></label>
+          <input type="range" id="ops" min="0" max="500000" step="250" value="60000">
+          <div class="range-ends"><span>$0</span><span>$500K</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>2 · Your Fabric configuration</h2>
+        <p class="hint">Priced from Azure US-region list rates (~$0.18/CU-hour PAYG).</p>
+
+        <div class="field">
+          <label>Fabric capacity SKU</label>
+          <select id="sku">
+            <option value="2">F2 — 2 CUs (~$263/mo PAYG · dev/PoC)</option>
+            <option value="4">F4 — 4 CUs (~$526/mo PAYG)</option>
+            <option value="8">F8 — 8 CUs (~$1,051/mo PAYG · small team)</option>
+            <option value="16">F16 — 16 CUs (~$2,102/mo PAYG)</option>
+            <option value="32">F32 — 32 CUs (~$4,205/mo PAYG · mid-size)</option>
+            <option value="64" selected>F64 — 64 CUs (~$8,410/mo PAYG · Premium P1 equivalent)</option>
+            <option value="128">F128 — 128 CUs (~$16,819/mo PAYG · enterprise)</option>
+            <option value="256">F256 — 256 CUs (~$33,638/mo PAYG)</option>
+          </select>
+          <p class="note">Rule of thumb: F8–F16 for a small analytics team, F32–F64 for mixed engineering + BI workloads, F64+ if you have a large report-viewer audience or models over 10 GB.</p>
+        </div>
+
+        <div class="field">
+          <label>Pricing model</label>
+          <div class="toggle" id="pricing">
+            <button data-mode="reserved" class="on">1-year reserved (−41%)</button>
+            <button data-mode="payg">Pay-as-you-go</button>
+          </div>
+        </div>
+
+        <div class="field" id="hoursField" style="display:none">
+          <label>Capacity running hours (PAYG can be paused) <span class="val" id="v-hours"></span></label>
+          <input type="range" id="hours" min="160" max="730" step="10" value="730">
+          <div class="range-ends"><span>160 h/mo (business hours)</span><span>730 h/mo (24/7)</span></div>
+        </div>
+
+        <div class="field">
+          <label>OneLake storage <span class="val" id="v-tb"></span></label>
+          <input type="range" id="tb" min="1" max="500" step="1" value="20">
+          <div class="range-ends"><span>1 TB</span><span>500 TB</span></div>
+          <p class="note">Billed at $0.023/GB/month (≈ $23.55/TB/month), same rate as ADLS Gen2 hot tier.</p>
+        </div>
+
+
+        <div class="section-title">Power BI users</div>
+        <div class="field">
+          <label>Report creators / developers <span class="val" id="v-devs"></span></label>
+          <input type="range" id="devs" min="1" max="200" step="1" value="10">
+          <div class="range-ends"><span>1</span><span>200</span></div>
+          <p class="note">Creators always need Power BI Pro — $14/user/month = $168/user/year (Microsoft list price, effective Apr 2025), on any SKU.</p>
+        </div>
+        <div class="field">
+          <label>Report viewers (consume dashboards only) <span class="val" id="v-viewers"></span></label>
+          <input type="range" id="viewers" min="0" max="2000" step="10" value="150">
+          <div class="range-ends"><span>0</span><span>2,000</span></div>
+          <div class="callout" id="f64note"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="results">
+      <div class="big">
+        <div class="lbl">Estimated net annual savings</div>
+        <div class="num" id="total">$0</div>
+        <div class="per" id="threeYear"></div>
+      </div>
+      <div class="card">
+        <div class="stat-row"><span>Current stack (annual)</span><b id="cur">$0</b></div>
+        <div class="stat-row"><span><strong>Fabric total (annual)</strong></span><b id="fab">$0</b></div>
+        <div class="stat-row sub-row"><span>· Capacity (<span id="skuLbl">F64</span>, <span id="modeLbl">reserved</span>)</span><b id="capCost">$0</b></div>
+        <div class="stat-row sub-row"><span>· OneLake storage</span><b id="storCost">$0</b></div>
+        <div class="stat-row sub-row"><span>· Power BI Pro licenses (<span id="licDetail"></span>)</span><b id="licCost">$0</b></div>
+        <div class="stat-row"><span>Direct platform savings</span><b id="plat">$0</b></div>
+
+        <div class="bar-wrap">
+          <div class="bar-lbl"><span>Current stack</span><span id="curB"></span></div>
+          <div class="bar before"><i id="curBar" style="width:100%"></i></div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-lbl"><span>Microsoft Fabric</span><span id="fabB"></span></div>
+          <div class="bar"><i id="fabBar" style="width:60%"></i></div>
+        </div>
+
+        <a class="cta" href="mailto:hello@yourcompany.com?subject=Microsoft%20Fabric%20Savings%20Assessment">Get a detailed assessment →</a>
+        <p class="disclaimer">Based on Azure US-region list pricing (mid-2026): ~$0.18/CU-hour PAYG, ~41% reserved discount, OneLake $0.023/GB/mo, Power BI Pro $14/user/mo. Regional prices vary ±10–15%. Estimates for planning only — actual costs depend on workload sizing, smoothing/bursting behavior, and your Microsoft agreement. Not affiliated with Microsoft.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2026 Your Company · Validate final sizing with the official Azure Pricing Calculator and Fabric Capacity Metrics App.</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>'$'+Math.round(n).toLocaleString('en-US');
+const CU_RATE=0.18;          // $/CU-hour PAYG, US region
+const RESERVED_DISC=0.41;    // 1-yr reservation discount
+const TB_MONTH=23.55;        // $/TB/month OneLake ($0.023/GB)
+const PRO=14;                // Power BI Pro $/user/month
+let mode='reserved';
+
+const sliders=['dw','etl','bi','stor','ops','sku','hours','tb','devs','viewers'];
+
+function calc(){
+  const dw=+$('dw').value, etl=+$('etl').value, bi=+$('bi').value,
+        stor=+$('stor').value, ops=+$('ops').value;
+  const cus=+$('sku').value, hours=+$('hours').value, tb=+$('tb').value;
+  const devs=+$('devs').value, viewers=+$('viewers').value;
+
+  // labels
+  [['dw',dw],['etl',etl],['bi',bi],['stor',stor],['ops',ops]].forEach(([k,v])=>{
+    const box=$('n-'+k);
+    if(document.activeElement!==box) box.value=v.toLocaleString('en-US');
+  });
+  $('v-hours').textContent=hours+' h/mo';
+  $('v-tb').textContent=tb+' TB';
+  $('v-devs').textContent=devs; $('v-viewers').textContent=viewers;
+
+  const cur=dw+etl+bi+stor+ops;
+
+  // Fabric capacity cost
+  let capMonthly;
+  if(mode==='reserved'){
+    capMonthly=cus*CU_RATE*730*(1-RESERVED_DISC);   // reserved bills full month
+  }else{
+    capMonthly=cus*CU_RATE*hours;                    // PAYG can be paused
+  }
+  const capAnnual=capMonthly*12;
+
+  // OneLake storage
+  const storAnnual=tb*TB_MONTH*12;
+
+  // Licensing: creators always need Pro; viewers need Pro only below F64
+  const licUsers=devs+(cus<64?viewers:0);
+  const licAnnual=licUsers*PRO*12;
+
+  const fabAnnual=capAnnual+storAnnual+licAnnual;
+  const plat=cur-fabAnnual;
+  const total=plat;
+
+  // F64 licensing callout
+  const note=$('f64note');
+  if(cus<64 && viewers>0){
+    note.classList.add('show');
+    const crossover=Math.round((64*CU_RATE*730*(1-RESERVED_DISC))/PRO);
+    note.innerHTML='On '+$('sku').options[$('sku').selectedIndex].text.split(' —')[0]+
+      ', all <b>'+viewers.toLocaleString()+' viewers</b> need Pro licenses ('+fmt(viewers*PRO*12)+
+      '/yr). At F64+, viewers are free — typically cheaper beyond ~'+crossover.toLocaleString()+' viewers.';
+  }else if(cus>=64 && viewers>0){
+    note.classList.add('show');
+    note.innerHTML='F64+ includes free viewer access — you avoid '+fmt(viewers*PRO*12)+'/yr in Pro licenses for these '+viewers.toLocaleString()+' viewers.';
+  }else{ note.classList.remove('show'); }
+
+  // results
+  $('cur').textContent=fmt(cur);
+  $('fab').textContent=fmt(fabAnnual);
+  $('capCost').textContent=fmt(capAnnual);
+  $('storCost').textContent=fmt(storAnnual);
+  $('licCost').textContent=fmt(licAnnual);
+  $('licDetail').textContent=licUsers.toLocaleString()+(licUsers===1?' user':' users')+' × $14/mo';
+  $('skuLbl').textContent='F'+cus;
+  $('modeLbl').textContent=mode==='reserved'?'1-yr reserved':'PAYG, '+hours+' h/mo';
+  const platEl=$('plat');
+  platEl.textContent=(plat>=0?'':'−')+fmt(Math.abs(plat));
+  platEl.className=plat>=0?'pos':'neg';
+  const totalEl=$('total');
+  totalEl.textContent=(total>=0?'':'−')+fmt(Math.abs(total));
+  totalEl.classList.toggle('neg',total<0);
+  $('threeYear').textContent=total>=0?('≈ '+fmt(total*3)+' over 3 years'):'Fabric costs more at this configuration — try reserved pricing, a smaller SKU, or PAYG with pausing';
+  $('curB').textContent=fmt(cur);
+  $('fabB').textContent=fmt(fabAnnual);
+  const maxV=Math.max(cur,fabAnnual,1);
+  $('curBar').style.width=Math.max(4,(cur/maxV)*100)+'%';
+  $('fabBar').style.width=Math.max(4,(fabAnnual/maxV)*100)+'%';
+}
+
+sliders.forEach(id=>$(id).addEventListener('input',calc));
+['dw','etl','bi','stor','ops'].forEach(k=>{
+  const box=$('n-'+k), slider=$(k);
+  box.addEventListener('input',()=>{
+    const digits=box.value.replace(/[^0-9]/g,'');
+    let v=digits===''?0:parseInt(digits,10);
+    v=Math.min(v,+slider.max);
+    slider.value=v;
+    // live comma formatting, caret kept at end of typed digits
+    const caretFromEnd=box.value.length-box.selectionStart;
+    box.value=digits===''?'':v.toLocaleString('en-US');
+    const pos=Math.max(0,box.value.length-caretFromEnd);
+    box.setSelectionRange(pos,pos);
+    calc();
+  });
+  box.addEventListener('blur',()=>{ box.value=(+slider.value).toLocaleString('en-US'); });
+});
+document.querySelectorAll('#pricing button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.mode;
+    document.querySelectorAll('#pricing button').forEach(x=>x.classList.toggle('on',x===b));
+    $('hoursField').style.display=mode==='payg'?'block':'none';
+    calc();
+  });
+});
+calc();
+</script>
+</body>
+</html>
